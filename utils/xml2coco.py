@@ -69,19 +69,19 @@ def process_xml_to_coco(xml_file, actions_file, coco_format, unique_id):
         actions = f.readlines()
     root = tree.getroot()
     for image in tqdm(root.findall('image'), desc=f"Processing {xml_file}"):
-        image_id = int(image.get('id'))
+        image_id = int(image.get('id').split('_')[-1])
         if image_id < len(actions):
             print(xml_file)
             frame_dir = "/".join(xml_file.split('/')[4:6])+'/FRAMES/'+xml_file.split('/')[-1].replace('.xml','')
             image_entry = {
                 "id": unique_img_ids,
-                "file_name": os.path.join(frame_dir, str(int(image.get('name').replace('frame_', vid_name+'/'+vid_name+'_')))+'.png'),
+                "file_name": os.path.join(frame_dir, str((image.get('name').replace('frame_', vid_name+'/'+vid_name+'_')))+'.png'),
                 "width": int(image.get('width')),
                 "height": int(image.get('height'))
             }
             coco_format['images'].append(image_entry)
 
-            bounding_boxes = {"right": [], "left": []}
+            bounding_boxes = {"right": [0, 0, 0, 0], "left": [0, 0, 0, 0]}
             keypoints = {"right": [0] * 63, "left": [0] * 63}
 
             # Process bounding boxes
@@ -114,7 +114,7 @@ def process_xml_to_coco(xml_file, actions_file, coco_format, unique_id):
                     "keypoints": keypoints[mode],
                     "mode": mode,
                     "category_id": 1,
-                    "area": bounding_boxes[mode][2] * bounding_boxes[mode][3] if bounding_boxes[mode] else 0,
+                    "area": bounding_boxes[mode][2] * bounding_boxes[mode][3],
                     "iscrowd": 0,
                     "num_keypoints": sum(1 for i in range(2, len(keypoints[mode]), 3) if keypoints[mode][i] == 2),
                     "action": actions[image_id].split('\t')[-1].strip(),

@@ -27,6 +27,10 @@ action_mapping:
   spread: 9 
   background: 10
 
+mode:
+  right: 1
+  left: 0
+
 kp_mapping: [
     "WRIST",
     "THUMB_CMC",

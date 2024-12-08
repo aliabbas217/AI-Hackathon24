@@ -383,14 +383,20 @@ class DLA(nn.Module):
         return y
 
     def load_pretrained_model(self, data='imagenet', name='dla34', hash='ba72cf86'):
-        # fc = self.fc
         if name.endswith('.pth'):
             model_weights = torch.load(data + name)
         else:
             model_url = get_model_url(data, name, hash)
             model_weights = model_zoo.load_url(model_url)
-        self.load_state_dict(model_weights, strict=False)
-        # self.fc = fc
+
+        # Create a new state dictionary with only the required keys
+        new_state_dict = {}
+        for k, v in model_weights.items():
+            if k in self.state_dict(): # only transfer if in current model
+                if v.shape == self.state_dict()[k].shape: #size matching
+                    new_state_dict[k] = v
+
+        self.load_state_dict(new_state_dict, strict=False)  # Set strict=False for partial loading
 
 
 # Add DLA variants with different numbers of layers
@@ -409,14 +415,15 @@ def dla46(pretrained=True, levels=None, in_channels=None, **kwargs):
 def dla60(pretrained=True, levels=None, in_channels=None, **kwargs):
     model = DLA(levels=levels, channels=in_channels, block=BasicBlock, **kwargs)
     if pretrained:
-        model.load_pretrained_model(data='imagenet', name='dla60', hash='c4d2260d')  # Add appropriate hash
+        model.load_pretrained_model(data='imagenet', name='dla60', hash='24839fc4')  # Corrected hash
     return model
 
 def dla102(pretrained=True, levels=None, in_channels=None, **kwargs):
     model = DLA(levels=levels, channels=in_channels, block=BasicBlock, **kwargs)
     if pretrained:
-        model.load_pretrained_model(data='imagenet', name='dla102', hash='687b1b3f')  # Add appropriate hash
+        model.load_pretrained_model(data='imagenet', name='dla102', hash='27a30eac')  # Add appropriate hash
     return model
+
 
 # DLANet class allowing for model selection
 class DLANet(nn.Module):
@@ -438,7 +445,7 @@ class DLANet(nn.Module):
             'dla34': dla34,
             'dla46': dla46,
             'dla60': dla60,
-            'dla102': dla102,
+            'dla102': dla102
         }
 
         if dla not in model_dict:
